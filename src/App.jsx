@@ -1,41 +1,57 @@
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { LocalizationProvider } from '@mui/x-date-pickers';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import LogIn from './Views/LogIn';
-import NavBar from './components/NavBar';
-import Calendar from './/Views/Calendar';
-import './App.css';
-import SignUpOne from './Views/SignUpOne';
-import SignUpTwo from './Views/SignUpTwo';
-import { DateContextWrapper } from './context/DateContext';
+import { useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from './services/firebase';
+import { AuthContext } from './context/AuthContext';
+import { getUserData } from './services/userService';
+import Register from './components/auth/Register';
+import Login from './components/auth/Login';
+import NavBar from './components/navigation/NavBar';
+import { Home } from './pages/Home';
+import Calendar from './components/calendar/Calendar';
+import UserProfile from './pages/UserProfile';
 
-const theme = createTheme({});
+function App() {
+  const [user] = useAuthState(auth);
+  const [appState, setAppState] = useState({
+    user,
+    userData: null
+  });
 
-export default function App() {
-  const noNavBar = ['/login', '/signup1', '/signup2'];
-  const currLocation = window.location.pathname;
-  const showNavBar = !noNavBar.includes(currLocation);
+  useEffect(() => {
+    if (user === null) {
+      setAppState({
+        user: null,
+        userData: null
+      });
+    } else {
+      getUserData(user.uid)
+        .then((snapshot) => {
+          if (!snapshot.exists()) {
+            throw new Error('Something went wrong!');
+          }
+
+          setAppState({
+            ...appState,
+            userData: snapshot.val()[Object.keys(snapshot.val())[0]]
+          });
+        })
+        .catch((e) => alert(e.message));
+    }
+  }, [user]);
 
   return (
-    <div className="app">
-      <ThemeProvider theme={theme}>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DateContextWrapper>
-            <div className="nav-bar">{showNavBar && <NavBar />}</div>
-            <div className="page">
-              <BrowserRouter basename="/">
-                <Routes>
-                  <Route path="/" element={<Calendar />} />
-                  <Route path="/login" element={<LogIn />} />
-                  <Route path="/signup1" element={<SignUpOne />} />
-                  <Route path="/signup2" element={<SignUpTwo />} />
-                </Routes>
-              </BrowserRouter>
-            </div>
-          </DateContextWrapper>
-        </LocalizationProvider>
-      </ThemeProvider>
-    </div>
+    <AuthContext.Provider value={{ ...appState, setUser: setAppState }}>
+      <NavBar></NavBar>
+      <Routes>
+        <Route path="/log-in" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/calendar" element={<Calendar />} />
+        <Route path="/userprofile" element={<UserProfile />} />
+      </Routes>
+    </AuthContext.Provider>
   );
 }
+
+export default App;

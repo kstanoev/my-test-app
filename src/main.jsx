@@ -1,16 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
+import './index.css';
+import { BrowserRouter } from 'react-router-dom';
+import { ThemeProvider } from '@material-tailwind/react';
+import ContextWrapper from './context/ContextWrapper.jsx';
 
-/**
- * Entry point for rendering the React application.
- * Uses ReactDOM.createRoot to render the application into the 'root' element.
- *
- * @param {HTMLElement} rootElement - The root HTML element to render the application into.
- * @returns {void}
- */
 ReactDOM.createRoot(document.getElementById('root')).render(
-  // <React.StrictMode>
-  <App />
-  // </React.StrictMode>
+  <React.StrictMode>
+    <BrowserRouter>
+      <ContextWrapper>
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
+      </ContextWrapper>
+    </BrowserRouter>
+  </React.StrictMode>
 );
