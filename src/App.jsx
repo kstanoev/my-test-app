@@ -1,57 +1,45 @@
-import { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { useEffect, useState } from 'react'
+import './App.css'
+import Navbar from './components/Navbar/Navbar'
+import { Route, Routes } from 'react-router-dom'
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from './services/firebase';
-import { AuthContext } from './context/AuthContext';
-import { getUserData } from './services/userService';
-import Register from './components/auth/Register';
-import Login from './components/auth/Login';
-import NavBar from './components/navigation/NavBar';
-import { Home } from './pages/Home';
-import Calendar from './components/calendar/Calendar';
-import UserProfile from './pages/UserProfile';
+import Home from './components/Home/Home'
+import LandingPage from './components/LandingPage/LandingPage'
+import Calendar from './components/Calendar/Calendar'
+import Contacts from './components/Contacts/Contacts'
+import Events from './components/Events/Events'
+import SignUp from './components/Auth/Register/Signup'
+import { useAuth } from './contexts/AuthContext'
+import { getUserData } from './services/user.service';
+import { auth } from './config/firebase';
+import SignIn from './components/Auth/Login/Signin';
+import { useData } from './contexts/DataContext';
+import AdminDashboard from './components/Admin/AdminDashboard';
 
 function App() {
-  const [user] = useAuthState(auth);
-  const [appState, setAppState] = useState({
-    user,
-    userData: null
-  });
-
-  useEffect(() => {
-    if (user === null) {
-      setAppState({
-        user: null,
-        userData: null
-      });
-    } else {
-      getUserData(user.uid)
-        .then((snapshot) => {
-          if (!snapshot.exists()) {
-            throw new Error('Something went wrong!');
-          }
-
-          setAppState({
-            ...appState,
-            userData: snapshot.val()[Object.keys(snapshot.val())[0]]
-          });
-        })
-        .catch((e) => alert(e.message));
-    }
-  }, [user]);
-
+  const { user, userData, isAuthenticated,isAdmin } = useAuth();
+  const { users } = useData()
   return (
-    <AuthContext.Provider value={{ ...appState, setUser: setAppState }}>
-      <NavBar></NavBar>
-      <Routes>
-        <Route path="/log-in" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/calendar" element={<Calendar />} />
-        <Route path="/userprofile" element={<UserProfile />} />
-      </Routes>
-    </AuthContext.Provider>
-  );
+    <>
+      {isAuthenticated ?
+        (<>
+          <Navbar isAuthenticated={isAuthenticated} />
+          <Routes>
+            <Route index element={<Home />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/contacts" element={<Contacts />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/calendar" element={<Calendar />} />
+            {isAdmin && <Route path="/admin" element={<AdminDashboard />} />}
+          </Routes>
+        </>) :
+        (
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+          </Routes>
+        )}
+    </>
+  )
 }
 
-export default App;
+export default App
