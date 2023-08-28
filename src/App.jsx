@@ -1,45 +1,54 @@
-import { useEffect, useState } from 'react'
-import './App.css'
-import Navbar from './components/Navbar/Navbar'
-import { Route, Routes } from 'react-router-dom'
-import { useAuthState } from 'react-firebase-hooks/auth';
-import Home from './components/Home/Home'
-import LandingPage from './components/LandingPage/LandingPage'
-import Calendar from './components/Calendar/Calendar'
-import Contacts from './components/Contacts/Contacts'
-import Events from './components/Events/Events'
-import SignUp from './components/Auth/Register/Signup'
-import { useAuth } from './contexts/AuthContext'
-import { getUserData } from './services/user.service';
-import { auth } from './config/firebase';
-import SignIn from './components/Auth/Login/Signin';
-import { useData } from './contexts/DataContext';
-import AdminDashboard from './components/Admin/AdminDashboard';
+import { useAuthState } from "react-firebase-hooks/auth"
+import { Route, Routes } from "react-router-dom"
+import { auth } from "./config/firebase"
+import LandingLayout from "./layout/LandingLayout"
+import LandingPage from "./pages/Landing/LandingPage"
+import LoginPage from "./pages/Login/LoginPage"
+import RegisterPage from "./pages/Register/RegisterPage"
+import Calendar from "./components/Calendar/calendar"
+import ApplicationLayout from "./layout/ApplicationLayout"
+import ProfilePage from "./components/Profile/ProfilePage"
+import CreateEvent from "./components/Events/CreateEvents"
+import { useLoadScript } from "@react-google-maps/api";
+import ContactList from "./components/ContactList/ContactList"
+import MembersPage from "./pages/Members/Members"
+
+const GOOGLE_MAPS_API_KEY = "AIzaSyCs89FEdCghqxYJoWMICN59cqhVOYyRLgs";
 
 function App() {
-  const { user, userData, isAuthenticated,isAdmin } = useAuth();
-  const { users } = useData()
+  const [user, loading] = useAuthState(auth)
+
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: ["places"],
+  });
+
   return (
     <>
-      {isAuthenticated ?
-        (<>
-          <Navbar isAuthenticated={isAuthenticated} />
+      {user ? (
+        <ApplicationLayout>
           <Routes>
-            <Route index element={<Home />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/contacts" element={<Contacts />} />
-            <Route path="/events" element={<Events />} />
+            <Route index element={<Calendar />} />
             <Route path="/calendar" element={<Calendar />} />
-            {isAdmin && <Route path="/admin" element={<AdminDashboard />} />}
+            <Route path="/create-event" element={<CreateEvent />} />
+            {/* <Route path="/events" element={<EventsPage />} /> */}
+            <Route path="/members" element={<MembersPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/contacts" element={<ContactList />} />
           </Routes>
-        </>) :
-        (
+        </ApplicationLayout>
+      ) : (
+        <LandingLayout>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
+            <Route index element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
           </Routes>
-        )}
+        </LandingLayout>
+      )}
     </>
-  )
+  );
 }
+
 
 export default App
